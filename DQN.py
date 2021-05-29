@@ -6,6 +6,9 @@ import numpy as np
 
 
 class ReplayBuffer(object):
+	"""
+	Sauvegarde toute les données pour entraîner le réseau de neurones
+	"""
 	def __init__(self, max_size, input_shape,n_action, discrete=False):
 		self.mem_size = max_size
 		self.mem_cntr = 0
@@ -63,6 +66,9 @@ def build_dqn(lr, n_actions, input_dims, fcl_dims, fc2_dims):
 
 
 class Agent(object):
+	"""
+	Class agent avec le réseau de neurones
+	"""
 	def __init__(self,alpha, gamma, n_actions,epsilon, batch_size,
 		input_dims, epsilon_dec=0.996,epsilon_end= 0.01,
 		mem_size=1000000, fname='dqn_model.h5'):
