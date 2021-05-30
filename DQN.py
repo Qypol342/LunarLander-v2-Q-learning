@@ -216,7 +216,7 @@ class Agent_Replay(object):
 		self.epsilon = self.epsilon*self.epsilon_dec if self.epsilon>\
 			self.epsilon_min else self.epsilon_min
 
-		#print(self.frame_count , self.update_target_network)
+		#print(self.frame_count , self.update_target_    network)
 		if self.frame_count % self.update_target_network == 0:
 			# update the the target network with new weights
 			self.q_eval_target.set_weights(self.q_eval.get_weights())
