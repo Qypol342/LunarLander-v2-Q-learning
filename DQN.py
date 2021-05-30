@@ -229,9 +229,9 @@ class Agent_Replay(object):
 	def save_model(self,front=''):
 		self.q_eval.save(front+self.model_file)
 
-	def load_model(self):
-		self.q_eval = load_model(self.model_file)
-		self.q_eval_target = load_model(self.model_file)
+	def load_model(self,path=''):
+		self.q_eval = load_model(path+self.model_file)
+		self.q_eval_target = load_model(path+self.model_file)
 
 
 
