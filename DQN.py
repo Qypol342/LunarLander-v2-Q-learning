@@ -71,7 +71,7 @@ class Agent(object):
 	"""
 	def __init__(self,alpha, gamma, n_actions,epsilon, batch_size,
 		input_dims, epsilon_dec=0.996,epsilon_end= 0.01,
-		mem_size=1000000, fname='dqn_model.h5'):
+		mem_size=1000000, fname='dqn_model.h5',update_target_network =10000):
 
 		self.action_space = [i for i in range(n_actions)]
 		self.n_actions = n_actions
@@ -81,11 +81,14 @@ class Agent(object):
 		self.epsilon_min = epsilon_end
 		self.batch_size = batch_size
 		self.model_file = fname
+		self.update_target_network  = update_target_network 
+		self.frame_count = 0
 
 		self.memory = ReplayBuffer(mem_size, input_dims, n_actions, 
 			discrete=True)
 
 		self.q_eval = build_dqn(alpha, n_actions, input_dims, 256, 256)
+		self.q_eval_target = build_dqn(alpha, n_actions, input_dims, 256, 256)
 
 	def remember(self, state, action, reward, new_state, done):
 		self.memory.store_transition(state, action, reward, new_state, done)
@@ -102,6 +105,7 @@ class Agent(object):
 		return action
 
 	def learn(self):
+		self.frame_count += 1
 		if self.memory.mem_cntr < self.batch_size:
 			return
 		state, action, reward, new_state, done = \
@@ -113,7 +117,8 @@ class Agent(object):
 		action_indices = np.dot(action, action_values)
 
 		q_eval = self.q_eval.predict(state)
-		q_next = self.q_eval.predict(new_state)
+		#q_next = self.q_eval.predict(new_state)
+		q_next = self.q_eval_target.predict(new_state)
 
 		q_target = q_eval.copy()
 
@@ -128,12 +133,105 @@ class Agent(object):
 		self.epsilon = self.epsilon*self.epsilon_dec if self.epsilon>\
 			self.epsilon_min else self.epsilon_min
 
+		#print(self.frame_count , self.update_target_network)
+		if self.frame_count % self.update_target_network == 0:
+			# update the the target network with new weights
+			self.q_eval_target.set_weights(self.q_eval.get_weights())
+			# Log details
+
+			print((self.frame_count))
+
 
 
 	def save_model(self,front=''):
 		self.q_eval.save(front+self.model_file)
+
 	def load_model(self):
 		self.q_eval = load_model(self.model_file)
+		self.q_eval_target = load_model(self.model_file)
+
+
+class Agent_Replay(object):
+	def __init__(self,alpha, gamma, n_actions,epsilon, batch_size,
+		input_dims, epsilon_dec=0.996,epsilon_end= 0.01,
+		mem_size=1000000, fname='dqn_model.h5',update_target_network =10000):
+
+		self.action_space = [i for i in range(n_actions)]
+		self.n_actions = n_actions
+		self.gamma = gamma
+		self.epsilon = epsilon
+		self.epsilon_dec = epsilon_dec
+		self.epsilon_min = epsilon_end
+		self.batch_size = batch_size
+		self.model_file = fname
+		self.update_target_network  = update_target_network 
+		self.frame_count = 0
+
+		self.memory = ReplayBuffer(mem_size, input_dims, n_actions, 
+			discrete=True)
+
+		self.q_eval = build_dqn(alpha, n_actions, input_dims, 256, 256)
+		self.q_eval_target = build_dqn(alpha, n_actions, input_dims, 256, 256)
+
+	def remember(self, state, action, reward, new_state, done):
+		self.memory.store_transition(state, action, reward, new_state, done)
+
+	def choose_action(self, state):
+		state = state[np.newaxis, : ]
+		rand = np.random.random()
+		if rand< self.epsilon:
+			action = np.random.choice(self.action_space)
+		else:
+			actions = self.q_eval.predict(state)
+			action = np.argmax(actions)
+
+		return action
+
+	def learn(self):
+		self.frame_count += 1
+		if self.memory.mem_cntr < self.batch_size:
+			return
+		state, action, reward, new_state, done = \
+			self.memory.sample_buffer(self.batch_size)
+
+
+
+		action_values = np.array(self.action_space, dtype=np.int8)
+		action_indices = np.dot(action, action_values)
+
+		q_eval = self.q_eval.predict(state)
+		#q_next = self.q_eval.predict(new_state)
+		q_next = self.q_eval_target.predict(new_state)
+
+		q_target = q_eval.copy()
+
+		batch_index = np.arange(self.batch_size, dtype = np.int32)
+
+
+		q_target[batch_index, action_indices] =  reward +  \
+			self.gamma*np.max(q_next, axis=1)*done
+
+		_ = self.q_eval.fit(state, q_target, verbose=0)
+
+		self.epsilon = self.epsilon*self.epsilon_dec if self.epsilon>\
+			self.epsilon_min else self.epsilon_min
+
+		#print(self.frame_count , self.update_target_network)
+		if self.frame_count % self.update_target_network == 0:
+			# update the the target network with new weights
+			self.q_eval_target.set_weights(self.q_eval.get_weights())
+			# Log details
+
+			print((self.frame_count))
+
+
+
+	def save_model(self,front=''):
+		self.q_eval.save(front+self.model_file)
+
+	def load_model(self):
+		self.q_eval = load_model(self.model_file)
+		self.q_eval_target = load_model(self.model_file)
 
 
 
