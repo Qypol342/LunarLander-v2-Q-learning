@@ -7,6 +7,6 @@
 
 ⚠️il n’est pas recommandé d'exécuter les programs sur son ordi mais sur une machine en ligne
 
-veuillez télécharger le répertoire est ouvrir le <a href='Lunar lander.pdf'>pdf</a> pour les explications
+veuillez télécharger le répertoire et ouvrir le <a href='Lunar lander.pdf'>pdf</a> pour les explications
 
 
